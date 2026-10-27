@@ -1,0 +1,4 @@
+# Copy to terraform.tfvars (gitignored) or use TF_VAR_ environment variables.
+subscription_id = "00000000-0000-0000-0000-000000000000"
+alert_email     = "budget-owner@example.com"
+monthly_budget  = 10
