@@ -117,7 +117,9 @@ terraform destroy
 | 03 | ![](screenshots/03-cost-analysis-by-resource-group.png) | Cost analysis view built by Terraform: month-to-date spend by resource group, service and tag. $1.31 so far, $1.57 forecast, almost all of it in `dev-rg` and billed under Virtual Network, consistent with the private endpoint. All of it shows as **Untagged**, which is exactly the attribution gap the tag policy reports |
 | 04 | ![](screenshots/04-anomaly-alert-rule.png) | Anomaly alert rule: active, daily, scoped to the subscription |
 | 05 | ![](screenshots/05-policy-compliance.png) | Policy compliance for the tag policy, viewed at the `cost-governance-rg` scope (1 of 1 compliant, since that group carries the tag). A subscription-wide view of the untagged groups is a planned follow-up |
-| 06 | *pending* | Weekly cost report scheduled action |
+| 06 | ![](screenshots/06-forecast-alert-email.png) | **A real alert firing.** With the budget temporarily lowered to $1, Azure emailed a forecast alert: month-end spend forecast at $1.63, over the $1.00 threshold. This proves the path from budget to action group to inbox |
+| 07 | ![](screenshots/07-budget-exceeded-test.png) | The same budget during the test, temporarily set to $1: evaluated spend of $1.33 is over the limit (shown in red), the forecast is $1.63, and all four conditions read $1 |
+| 08 | *pending* | Weekly cost report scheduled action |
 
 A budget evaluates on a schedule, and cost data lags, so the budget page shows $0.00 evaluated spend even though cost analysis shows $1.31. That is the delay described in the limitations above.
 
@@ -142,7 +144,8 @@ A budget evaluates on a schedule, and cost data lags, so the budget page shows $
 ## Next Steps
 
 - [x] Deploy and verify in the portal
-- [ ] Add the weekly-report screenshot and trigger a test alert by lowering the budget
+- [x] Trigger a test alert by lowering the budget (forecast alert received)
+- [ ] Add the weekly-report screenshot (first scheduled send is Monday, Nov 2)
 - [ ] Re-capture policy compliance at the subscription scope to show untagged groups
 - [ ] Tag existing resource groups, then switch the policy to `Deny`
 - [ ] Add a per-tag budget for one project
