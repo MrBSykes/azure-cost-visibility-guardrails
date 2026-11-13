@@ -131,11 +131,11 @@ resource "azurerm_cost_management_scheduled_action" "weekly_report" {
   email_addresses      = [var.alert_email]
   message              = "Month-to-date Azure spend by resource group."
 
-  frequency     = "Weekly"
-  days_of_week  = ["Monday"]
-  hour_of_day   = 13
-  start_date    = var.report_start_date
-  end_date      = var.report_end_date
+  frequency    = "Weekly"
+  days_of_week = ["Monday"]
+  hour_of_day  = 13
+  start_date   = var.report_start_date
+  end_date     = var.report_end_date
 }
 
 # Flags unusual daily spend, e.g. a forgotten resource, without waiting for the

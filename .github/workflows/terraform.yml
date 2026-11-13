@@ -1,0 +1,82 @@
+name: terraform
+
+# Pull request  -> fmt, validate, plan (nothing is changed in Azure)
+# Merge to main -> plan, then apply, but only after a person approves the
+#                  'production' environment in GitHub.
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write   # lets the job request a short-lived OIDC token for Azure
+
+env:
+  TF_IN_AUTOMATION: 'true'
+  TF_INPUT: 'false'
+  ARM_USE_OIDC: 'true'
+  ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_alert_email: ${{ secrets.ALERT_EMAIL }}
+
+defaults:
+  run:
+    working-directory: terraform
+
+jobs:
+  plan:
+    name: fmt, validate, plan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.4
+
+      - name: Format check
+        run: terraform fmt -check -recursive -diff
+
+      - name: Init (state in Azure Blob, Entra ID auth, no access keys)
+        run: terraform init -backend-config="use_oidc=true" -backend-config="use_azuread_auth=true"
+
+      - name: Validate
+        run: terraform validate
+
+      # No -out file on purpose: a saved plan contains variable values and, in a
+      # public repo, an uploaded artifact would be downloadable by anyone.
+      - name: Plan
+        run: terraform plan -lock-timeout=120s -no-color
+
+  apply:
+    name: apply (needs approval)
+    needs: plan
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: production   # required reviewer is configured in GitHub settings
+    concurrency:
+      group: terraform-apply
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.4
+
+      - name: Init
+        run: terraform init -backend-config="use_oidc=true" -backend-config="use_azuread_auth=true"
+
+      - name: Apply
+        run: terraform apply -auto-approve -lock-timeout=120s -no-color
